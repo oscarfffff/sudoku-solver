@@ -8,9 +8,16 @@ import Language.Hasmtlib
 import Solver (Cell, solveSudoku)
 import System.Random (randomRIO)
 
-main :: IO ()
-main = do
+solveUpwards = do
+  board <- createRandomBoardUpwards 10 []
+  print board
+
+solveDownwards = do
   board <- createCompleteBoard 10
   reducedBoard <- reduceBoard $ convertSolutionToIndexedArray $ concatMap (map fromIntegral) board
   print reducedBoard
   print $ length reducedBoard
+
+main :: IO ()
+main = do
+  solveDownwards

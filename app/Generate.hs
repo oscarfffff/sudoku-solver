@@ -43,6 +43,24 @@ createCompleteBoard numberOfRandomCells = do
     (Sat, Just board) -> return board
     _ -> createCompleteBoard numberOfRandomCells
 
+createRandomBoardUpwards :: Integer -> [Cell] -> IO [Cell]
+createRandomBoardUpwards numberOfNewCells currentCells = do
+  newCells <- replicateM (fromIntegral numberOfNewCells) buildRandomCell
+  let randomCells = currentCells ++ newCells
+  print "Current number of cells:"
+  print $ length randomCells
+  res <- solveSudoku randomCells []
+  case res of
+    (Sat, _) -> do
+      putStrLn "Found solution"
+      sol <- checkIfUniqueSolution randomCells
+      case sol of
+        True -> return randomCells
+        False -> createRandomBoardUpwards 5 randomCells
+    _ -> do
+      print "Solution was not valid"
+      createRandomBoardUpwards 5 currentCells
+
 reduceBoard :: [Cell] -> IO [Cell]
 reduceBoard preDefValues = do
   res <- checkIfUniqueSolution $ encode preDefValues
