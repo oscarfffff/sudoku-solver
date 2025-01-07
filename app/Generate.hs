@@ -1,7 +1,10 @@
+{-# LANGUAGE DataKinds #-}
+
 module Generate where
 
 import Control.Monad (replicateM)
 import Data.List
+import Data.List.Split (chunksOf)
 import Language.Hasmtlib
 import Solver (Cell, solveSudoku)
 import System.Random (randomRIO)
@@ -13,6 +16,8 @@ buildRandomCell = do
   randomColumn <- randomRIO (0 :: Int, 8)
   return (randomValue, (randomRow, randomColumn))
 
+printMatrix arr = mapM_ (putStrLn . unwords) $ map (map show) $ chunksOf 9 arr
+
 checkIfUniqueSolution :: [Cell] -> IO Bool
 checkIfUniqueSolution preDefValues = do
   res <- solveSudoku preDefValues []
@@ -20,9 +25,9 @@ checkIfUniqueSolution preDefValues = do
     (Sat, Just solution) -> do
       res2 <- solveSudoku preDefValues $ encode solution
       case res2 of
-        (Sat, _) -> do
+        (Sat, Just solution2) -> do
           print "Found solution but not unique"
-          print res2
+          printMatrix $ concat solution2
           return False
         _ -> do
           putStrLn "Found unique solution"
@@ -40,7 +45,6 @@ createCompleteBoard numberOfRandomCells = do
 
 reduceBoard :: [Cell] -> IO [Cell]
 reduceBoard preDefValues = do
-  -- Encode and check if the solution is unique
   res <- checkIfUniqueSolution $ encode preDefValues
   case res of
     False -> return preDefValues

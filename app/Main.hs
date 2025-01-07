@@ -3,7 +3,6 @@
 module Main where
 
 import Control.Monad (replicateM)
-import Data.List
 import Generate
 import Language.Hasmtlib
 import Solver (Cell, solveSudoku)
