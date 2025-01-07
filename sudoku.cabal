@@ -55,8 +55,8 @@ common warnings
 
 library
     hs-source-dirs:   app
-    exposed-modules:  Solver
-    build-depends:    base ^>=4.17.2.0, hasmtlib>=2.8.0
+    exposed-modules:  Solver, Generate
+    build-depends:    base ^>=4.17.2.0, hasmtlib>=2.8.0, random
     default-language: Haskell2010
 
 executable sudoku

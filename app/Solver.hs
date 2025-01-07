@@ -12,7 +12,7 @@ type Cell = (Int, (Int, Int))
 
 solveSudoku :: [Cell] -> [[Expr 'IntSort]] -> IO (Result, Maybe (Decoded [[Expr 'IntSort]]))
 solveSudoku predefinedValues excludedBoard = do
-  solveWith @SMT (solver z3) $ do
+  solveWith @SMT (solver $ debugging verbosely z3) $ do
     setLogic "QF_LIA"
     board <- replicateM 9 $ replicateM 9 $ var @IntSort
 
@@ -42,13 +42,8 @@ solveSudoku predefinedValues excludedBoard = do
 
     return board
 
--- Filters a 3x3 subgrid starting at parameters row and column
 getSubgridAtPosition :: [[Expr 'IntSort]] -> Int -> Int -> [Expr 'IntSort]
 getSubgridAtPosition board row column = concatMap (\x -> take 3 (drop column x)) (take 3 (drop row board))
 
--- Applies getSubgrid to the 9 different subgrids of the board:
--- (0,0), (0,3), (0,6)
--- (3,0), (3,3), (3,6)
--- (6,0), (6,3), (6,6)
 getAllSubgrids :: [[Expr 'IntSort]] -> [[Expr 'IntSort]]
 getAllSubgrids board = concatMap (\row -> map (\column -> getSubgridAtPosition board row column) [0, 3, 6]) [0, 3, 6]
