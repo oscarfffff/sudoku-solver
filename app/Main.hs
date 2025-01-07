@@ -22,22 +22,37 @@ checkIfUniqueSolution preDefValues = do
     (Sat, Just solution) -> do
       res2 <- solveSudoku preDefValues $ encode solution
       case res2 of
-        (Sat, _) -> return False
-        _ -> return True
-    _ -> return False
+        (Sat, _) -> do
+          print "Found solution but not unique"
+          print res2
+          return False
+        _ -> do
+          putStrLn "Found unique solution"
+          return True
+    _ -> do
+      putStrLn "Not a valid solution"
+      return False
 
-createRandomBoard :: IO [Cell]
-createRandomBoard = do
-  randomCells <- replicateM 10 buildRandomCell
+createRandomBoard :: Integer -> [Cell] -> IO [Cell]
+createRandomBoard numberOfNewCells currentCells = do
+  newCells <- replicateM (fromIntegral numberOfNewCells) buildRandomCell
+  let randomCells = currentCells ++ newCells
+  print "Current number of cells:"
+  print $ length randomCells
   res <- solveSudoku randomCells []
   case res of
-    (Sat, _) -> return randomCells
-    _ -> createRandomBoard
+    (Sat, _) -> do
+      putStrLn "Found solution"
+      sol <- checkIfUniqueSolution randomCells
+      case sol of
+        True -> return randomCells
+        False -> createRandomBoard 5 randomCells
+    _ -> do
+      print "Solution was not valid"
+      createRandomBoard 5 currentCells
 
 main :: IO ()
 main = do
-  let setNumbers = [(9, (0, 2)), (8, (0, 3)), (5, (0, 5)), (4, (0, 7)), (7, (0, 8))]
-  res <- checkIfUniqueSolution setNumbers
-  case res of
-    True -> print "Is unique"
-    False -> print "Is not unique"
+  board <- createRandomBoard 10 []
+  print board
+  print $ length board
