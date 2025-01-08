@@ -3,56 +3,44 @@
 module Main where
 
 import Control.Monad (replicateM)
-import Data.List
+import Data.List (intercalate)
+import Generate
 import Language.Hasmtlib
 import Solver (Cell, solveSudoku)
 import System.Random (randomRIO)
 
-buildRandomCell :: IO Cell
-buildRandomCell = do
-  randomValue <- randomRIO (0 :: Int, 9)
-  randomRow <- randomRIO (0 :: Int, 8)
-  randomColumn <- randomRIO (0 :: Int, 8)
-  return (randomValue, (randomRow, randomColumn))
+solveUpwards = do
+  board <- createRandomBoardUpwards 10 []
+  print board
 
-checkIfUniqueSolution :: [Cell] -> IO Bool
-checkIfUniqueSolution preDefValues = do
-  res <- solveSudoku preDefValues []
-  case res of
-    (Sat, Just solution) -> do
-      res2 <- solveSudoku preDefValues $ encode solution
-      case res2 of
-        (Sat, _) -> do
-          print "Found solution but not unique"
-          print res2
-          return False
-        _ -> do
-          putStrLn "Found unique solution"
-          return True
-    _ -> do
-      putStrLn "Not a valid solution"
-      return False
+solveDownwards = do
+  board <- createCompleteBoard 10
+  reducedBoard <- reduceBoard (convertSolutionToIndexedArray $ concatMap (map fromIntegral) board) 15
+  return reducedBoard
 
-createRandomBoard :: Integer -> [Cell] -> IO [Cell]
-createRandomBoard numberOfNewCells currentCells = do
-  newCells <- replicateM (fromIntegral numberOfNewCells) buildRandomCell
-  let randomCells = currentCells ++ newCells
-  print "Current number of cells:"
-  print $ length randomCells
-  res <- solveSudoku randomCells []
-  case res of
-    (Sat, _) -> do
-      putStrLn "Found solution"
-      sol <- checkIfUniqueSolution randomCells
-      case sol of
-        True -> return randomCells
-        False -> createRandomBoard 5 randomCells
-    _ -> do
-      print "Solution was not valid"
-      createRandomBoard 5 currentCells
+-- Create an empty 9x9 grid filled with 'x'
+emptyGrid :: [[Char]]
+emptyGrid = replicate 9 (replicate 9 '*')
+
+-- Update the grid with the given values
+updateGrid :: [[Char]] -> [(Int, (Int, Int))] -> [[Char]]
+updateGrid grid updates = foldl updateCell grid updates
+  where
+    updateCell g (val, (row, col)) =
+      let updatedRow = take col (g !! row) ++ show val ++ drop (col + 1) (g !! row)
+       in take row g ++ [updatedRow] ++ drop (row + 1) g
+
+addSpaces :: [[Char]] -> [[Char]]
+addSpaces = map (intercalate " " . map (: []))
+
+-- Print the grid
+printGrid :: [[Char]] -> IO ()
+printGrid grid = putStrLn $ intercalate "\n" (addSpaces grid)
 
 main :: IO ()
 main = do
-  board <- createRandomBoard 10 []
-  print board
+  board <- solveDownwards
+  print "------------------------------------------------------------------"
+  printGrid $ updateGrid emptyGrid board
   print $ length board
+  print "------------------------------------------------------------------"
