@@ -61,14 +61,19 @@ createRandomBoardUpwards numberOfNewCells currentCells = do
       print "Solution was not valid"
       createRandomBoardUpwards 5 currentCells
 
-reduceBoard :: [Cell] -> IO [Cell]
-reduceBoard preDefValues = do
-  res <- checkIfUniqueSolution $ encode preDefValues
-  case res of
-    False -> return preDefValues
-    True -> do
-      reducedBoard <- deleteRandomElements 1 preDefValues
-      reduceBoard reducedBoard
+reduceBoard :: [Cell] -> Integer -> IO [Cell]
+reduceBoard preDefValues allowedFailures = do
+  print "Number of allowed Failures: "
+  print allowedFailures
+  reducedBoard <- deleteRandomElements 3 preDefValues
+  if allowedFailures == 0
+    then return preDefValues
+    else do
+      res <- checkIfUniqueSolution $ encode reducedBoard
+      print res
+      case res of
+        False -> reduceBoard preDefValues (allowedFailures - 1)
+        True -> reduceBoard reducedBoard 15
 
 convertSolutionToIndexedArray :: [a] -> [(a, (Int, Int))]
 convertSolutionToIndexedArray arr = zipWith (\i x -> (x, (i `mod` 9, i `div` 9))) [0 ..] arr

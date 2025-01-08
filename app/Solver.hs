@@ -12,7 +12,7 @@ type Cell = (Int, (Int, Int))
 
 solveSudoku :: [Cell] -> [[Expr 'IntSort]] -> IO (Result, Maybe (Decoded [[Expr 'IntSort]]))
 solveSudoku predefinedValues excludedBoard = do
-  solveWith @SMT (solver $ debugging verbosely z3) $ do
+  solveWith @SMT (solver $ z3) $ do
     setLogic "QF_LIA"
     board <- replicateM 9 $ replicateM 9 $ var @IntSort
 
