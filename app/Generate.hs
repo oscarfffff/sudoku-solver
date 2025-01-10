@@ -5,7 +5,7 @@ module Generate where
 import Control.Monad (replicateM)
 import Data.List
 import Data.List.Split (chunksOf)
-import Language.Hasmtlib
+import Language.Hasmtlib hiding ((||))
 import Solver (Cell, solveSudoku)
 import System.Random (randomRIO)
 
@@ -41,7 +41,7 @@ createCompleteBoard numberOfRandomCells = do
   res <- solveSudoku randomCells []
   case res of
     (Sat, Just board) -> return board
-    _ -> createCompleteBoard numberOfRandomCells
+    (Unsat, _) -> createCompleteBoard numberOfRandomCells
 
 createRandomBoardUpwards :: Integer -> [Cell] -> IO [Cell]
 createRandomBoardUpwards numberOfNewCells currentCells = do
@@ -65,12 +65,11 @@ reduceBoard :: [Cell] -> Integer -> IO [Cell]
 reduceBoard preDefValues allowedFailures = do
   print "Number of allowed Failures: "
   print allowedFailures
-  reducedBoard <- deleteRandomElements 3 preDefValues
-  if allowedFailures == 0
+  reducedBoard <- deleteRandomElements 1 preDefValues
+  if ((length preDefValues) == 25) || allowedFailures == 0
     then return preDefValues
     else do
       res <- checkIfUniqueSolution $ encode reducedBoard
-      print res
       case res of
         False -> reduceBoard preDefValues (allowedFailures - 1)
         True -> reduceBoard reducedBoard 15
