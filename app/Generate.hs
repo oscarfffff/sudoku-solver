@@ -3,10 +3,9 @@
 module Generate where
 
 import Control.Monad (replicateM)
-import Data.List
-import Data.List.Split (chunksOf)
 import Language.Hasmtlib hiding ((||))
 import Solver (Cell, solveSudoku)
+import Utils
 import System.Random (randomRIO)
 
 buildRandomCell :: IO Cell
@@ -15,8 +14,6 @@ buildRandomCell = do
   randomRow <- randomRIO (0 :: Int, 8)
   randomColumn <- randomRIO (0 :: Int, 8)
   return (randomValue, (randomRow, randomColumn))
-
-printMatrix arr = mapM_ (putStrLn . unwords) $ map (map show) $ chunksOf 9 arr
 
 checkIfUniqueSolution :: [Cell] -> IO Bool
 checkIfUniqueSolution preDefValues = do
@@ -27,7 +24,7 @@ checkIfUniqueSolution preDefValues = do
       case res2 of
         (Sat, Just solution2) -> do
           print "Found solution but not unique"
-          printMatrix $ concat solution2
+          displayGrid $ solution2
           return False
         _ -> do
           putStrLn "Found unique solution"
@@ -36,37 +33,20 @@ checkIfUniqueSolution preDefValues = do
       putStrLn "Not a valid solution"
       return False
 
+createCompleteBoard :: Int -> IO [[Integer]]
 createCompleteBoard numberOfRandomCells = do
   randomCells <- replicateM (fromIntegral numberOfRandomCells) buildRandomCell
   res <- solveSudoku randomCells []
   case res of
     (Sat, Just board) -> return board
-    (Unsat, _) -> createCompleteBoard numberOfRandomCells
-
-createRandomBoardUpwards :: Integer -> [Cell] -> IO [Cell]
-createRandomBoardUpwards numberOfNewCells currentCells = do
-  newCells <- replicateM (fromIntegral numberOfNewCells) buildRandomCell
-  let randomCells = currentCells ++ newCells
-  print "Current number of cells:"
-  print $ length randomCells
-  res <- solveSudoku randomCells []
-  case res of
-    (Sat, _) -> do
-      putStrLn "Found solution"
-      sol <- checkIfUniqueSolution randomCells
-      case sol of
-        True -> return randomCells
-        False -> createRandomBoardUpwards 5 randomCells
-    _ -> do
-      print "Solution was not valid"
-      createRandomBoardUpwards 5 currentCells
+    _ -> createCompleteBoard numberOfRandomCells
 
 reduceBoard :: [Cell] -> Integer -> IO [Cell]
 reduceBoard preDefValues allowedFailures = do
-  print "Number of allowed Failures: "
+  putStrLn "Number of allowed Failures left: "
   print allowedFailures
   reducedBoard <- deleteRandomElements 1 preDefValues
-  if ((length preDefValues) == 25) || allowedFailures == 0
+  if ((length preDefValues) == 22) || allowedFailures == 0
     then return preDefValues
     else do
       res <- checkIfUniqueSolution $ encode reducedBoard
@@ -74,14 +54,14 @@ reduceBoard preDefValues allowedFailures = do
         False -> reduceBoard preDefValues (allowedFailures - 1)
         True -> reduceBoard reducedBoard 15
 
-convertSolutionToIndexedArray :: [a] -> [(a, (Int, Int))]
+convertSolutionToIndexedArray :: [Int] -> [Cell]
 convertSolutionToIndexedArray arr = zipWith (\i x -> (x, (i `mod` 9, i `div` 9))) [0 ..] arr
 
 deleteRandomElements :: Int -> [a] -> IO [a]
 deleteRandomElements n xs = do
-  indices <- replicateM n (randomRIO (0, length xs - 1))
-  let xs' = removeAtIndices indices xs
+  indicesToDelete <- replicateM n (randomRIO (0, length xs - 1))
+  let xs' = removeAtIndices indicesToDelete xs
   return xs'
 
 removeAtIndices :: [Int] -> [a] -> [a]
-removeAtIndices indices xs = foldr (\i acc -> take i acc ++ drop (i + 1) acc) xs (reverse indices)
+removeAtIndices indicesToDelete xs = foldr (\i acc -> take i acc ++ drop (i + 1) acc) xs (reverse indicesToDelete)
