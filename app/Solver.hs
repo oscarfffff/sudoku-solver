@@ -37,6 +37,7 @@ solveSudoku predefinedValues excludedBoard = do
     forM_ subgrids $ \subgrid -> do
       assert $ distinct subgrid
 
+    -- exclude board from solution
     unless (length excludedBoard == 0) $ do
       assert $ not $ foldl1 (&&) $ zipWith (===) (concat $ excludedBoard) (concat board)
 
