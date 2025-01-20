@@ -39,7 +39,7 @@ solveSudoku predefinedValues excludedBoard = do
 
     -- exclude board from solution
     unless (length excludedBoard == 0) $ do
-      assert $ not $ foldl1 (&&) $ zipWith (===) (concat $ excludedBoard) (concat board)
+      assert $ not $ foldl1 (&&) $ zipWith (===) (concat excludedBoard) (concat board)
 
     return board
 

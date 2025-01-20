@@ -5,7 +5,6 @@ module Generate where
 import Control.Monad (replicateM)
 import Language.Hasmtlib hiding ((||))
 import Solver (Cell, solveSudoku)
-import Utils
 import System.Random (randomRIO)
 
 buildRandomCell :: IO Cell
@@ -23,14 +22,10 @@ checkIfUniqueSolution preDefValues = do
       res2 <- solveSudoku preDefValues $ encode solution
       case res2 of
         (Sat, Just solution2) -> do
-          print "Found solution but not unique"
-          displayGrid $ solution2
           return False
         _ -> do
-          putStrLn "Found unique solution"
           return True
     _ -> do
-      putStrLn "Not a valid solution"
       return False
 
 createCompleteBoard :: Int -> IO [[Integer]]
@@ -43,16 +38,19 @@ createCompleteBoard numberOfRandomCells = do
 
 reduceBoard :: [Cell] -> Integer -> IO [Cell]
 reduceBoard preDefValues allowedFailures = do
+  putStrLn "------------------------------------------------------------------"
   putStrLn "Number of allowed Failures left: "
   print allowedFailures
+  putStrLn "Number of prefilled Cells: "
+  print $ length preDefValues
   reducedBoard <- deleteRandomElements 1 preDefValues
-  if ((length preDefValues) == 22) || allowedFailures == 0
+  if allowedFailures == 0
     then return preDefValues
     else do
       res <- checkIfUniqueSolution $ encode reducedBoard
       case res of
         False -> reduceBoard preDefValues (allowedFailures - 1)
-        True -> reduceBoard reducedBoard 15
+        True -> reduceBoard reducedBoard 20
 
 convertSolutionToIndexedArray :: [Int] -> [Cell]
 convertSolutionToIndexedArray arr = zipWith (\i x -> (x, (i `mod` 9, i `div` 9))) [0 ..] arr
