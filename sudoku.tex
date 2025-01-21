@@ -1,6 +1,6 @@
 \input{preamble}
-\input{format}
 \input{commands}
+\usepackage{listings}
 
 \begin{document}
 
@@ -11,7 +11,7 @@
 \end{Large}
 \vspace{2ex}
 
-Dieses Projekt implementiert einen Sudoku Solver, sowie einen Generator für neue Sudoku Instanzen. Zur Modellierung des SMT Problems wurde die Bibliothek "hasmtlib" sowie Haskell als Hostsprache genutzt
+Dieses Projekt implementiert einen Sudoku Solver, sowie einen Generator für neue Sudoku Instanzen. Zur Modellierung des SMT Problems wurde die Bibliothek "hasmtlib" sowie Haskell als Hostsprache genutzt.
 
 \vspace{2ex}
 
@@ -29,30 +29,67 @@ Dieses Projekt implementiert einen Sudoku Solver, sowie einen Generator für neu
 \end{Large}
 \vspace{2ex}
 
+Im wesentlichen wird das Sudoku Problem als 9x9 Matrix und die einzelnen Werte als Tupel von Wert und Koordiante implementiert.
+\begin{lstlisting}[language=Haskell]
+    board <- replicateM 9 $ replicateM 9 $ var @IntSort
+\end{lstlisting}
+\begin{lstlisting}
+    let setCells = [(n, (row,column)),...]
+\end{lstlisting}
+
 Das Projekt ist grundsätzlich in 2 Teile unterteilt:
 \begin{enumerate}[(1)]
     \item Solve.hs \newline
-    Der Solver zum Lösen eines Sudokus verwendet verwendet und modelliert ein SMT Problem mit 3 wesentlichen Constraints
+    Dieser Teil implementiert den eigentlichen Lösungsalgorithmus. Dabei wird das Problem in SMT modelliert und anschließend von z3 gelöst. Für die Modellierung bzw. für das Spiel an sich gibt es 3 wesentliche Constraints:
         \begin{enumerate}[(a)]
             \item Row Constraint \newline
-            Jede Zeile muss genau die Zahlen 1-9 enthalten (keine Doppelungen)
+            Jede Zeile muss genau die Zahlen 1-9 enthalten (keine Doppelungen)\newline
+            Dies ist bei der gegebenen Datenstruktur leicht umsetzbar, da das Feld bereits als Liste von Zeilen vorliegt. Durch das SMT Keyword "distinct" kann die Eigenschaft leicht überprüft werden.
             \item Column Constraint \newline
-            Jede Spalte muss genau die Zahlen 1-9 enthalten (keine Doppelungen)
+            Jede Spalte muss genau die Zahlen 1-9 enthalten (keine Doppelungen) \newline
+            Auch dieses Constraint folgt grundsätzlich dem gleichen Aufbau des Row Constraints. Allerdings muss hierfür die Matrix zunächst transponiert werden. Somit erhalten wir eine Liste von Spalten.
             \item Subgrid Constraint \newline
-            Jedes 3x3 Feld muss genau die Zahlen 1-9 enthalten (keine Doppelungen)
+            Jedes 3x3 Feld muss genau die Zahlen 1-9 enthalten (keine Doppelungen) \newline
+            Hierfür müssen die 3x3 Subgrids vorher in eigene Listen gefiltert werden. Dafür werden beginnt bei einer Koordiante "(row, column)" und die nächsten 3 Zeilen jeweils die nächsten 3 Spalten gefiltert
         \end{enumerate}
-    Desweiteren gibt es zwei Constraint, welchen den Zahlenraum einschränken (1-9), ein Constraint, welches die vordefinierten Felder voraussetzt und ein optionales Constraint, welches eine Lösung ausschließt (später wichtig für die Aufgaben Instanziierung)
+
+    Des weiteren gibt es zwei Constraint, welchen den Zahlenraum einschränken (1-9), ein Constraint, welches die vordefinierten Felder voraussetzt und ein optionales Constraint, welches eine Lösung ausschließt. Dies wird benötigt um später eine Lösung auf ihre Einzigartigkeit zu überprüfen und kommt beim Generieren eines neuen Rätsels zum Einsatz
+
     \item Generate.hs \newline
     Auf Basis des Solvers können neue Instanzen eines Sudokus generiert werden. Die grundsätzliche Idee ist dabei folgende:
         \begin{enumerate}[(1)]
-            \item Generiere \(n\) zufällige Felder (in meinem Beispiel 10) und Löse basierend auf diesen ein Sudokubrett
-            \item Entferne ein zufälliges Feld (die Lösbarkeit bleibt dabei erhalten)
-            \item Überprüfe, ob das Sudoku weiterhin nur eine mögliche Lösung hat. \newline
-            Falls ja, gehe zu Schritt (2) \newline
-            Falls nein, mache den letzten Schritt rückgängig und lösche ein anderes Feld. Wurde nach \(x\) Schritten (in meinem Beispiel 15) keine eindeutige Instanz mit weniger vorgegebenen Feldern gefunde, beende die Generierung und geben den aktuellen Stand zurück. Falls doch, gehe zu Schritt (2)
+            \item Generiere \(n\) zufällige Felder und Löse basierend auf diesen ein Sudokubrett. \newline
+            Sollten die zufälligen Felder eine Lösung des Sudokus verhindern, werden neue Zufallsfelder generiert. Hier muss abgewogen werden zwischen der Lösungsgeschwindigkeit des Solvers (mehr vorgegebene Werte beschleunigen das Lösen) und der möglichen Anzahl der Neugenerierungen, da die Felder keine gültige Lösung zulassen. 10 Zufällige Anfangswerte haben sich als gutes Mittelmaß herausgestellt.
+            \item Entferne ein zufälliges Feld \newline
+            Die Lösbarkeit bleibt dadurch erhalten.
+            \item Überprüfe, ob das Sudoku weiterhin nur eine mögliche Lösung hat $^1$.
+            \begin{enumerate}
+                \item Falls ja, gehe zu Schritt (2)
+                \item Falls nein, mache den letzten Schritt rückgängig und gehe zu (2). \newline
+                Das ist allerdings nur n mal möglich. Sollte nach n Wiederholungen keine bessere Instanz (mit weniger Feldern) gefunden wurden sein, beende die Generierung. Mehr Wiederholungen können das Ergebnis verbessern, wobei sich 15 erlaubte Wiederholungen als gute Anzahl herausgestellt haben. Je mehr Wiederholungen erlaubt sind, desto länger dauert auch die Generierung. Dies macht sich vor allem bemerkbar, wenn nur noch 30 Felder vorgegeben sind.
+            \end{enumerate}
         \end{enumerate}
 \end{enumerate}
-Um zu überprüfen, ob das aktuelle Brett nur eine mögliche Lösung hat, wird nach
+$^1$ Um zu überprüfen, ob das aktuelle Brett nur eine mögliche Lösung hat, existiert die checkIfUniqueSolution Funktion. Das Ergebnis wird im zweiten Durchlauf dem Solver übergeben mit der Bedingung, dass dies keine Lösung sein darf. Wird dennoch eine Lösung gefunden, war die Lösung des ersten Durchlaufs nicht die einzige. Wird hingegen keine weitere Lösung gefunden weiß man, dass das Sudoku nur eine Lösung hat.
+
+\vspace{2ex}
+
+\begin{Large}
+    Anwendung
+\end{Large}
+\vspace{2ex}
+
+Zum generieren eines neuen Sudokus kann das Programm über "cabal build" gebaut und anschließend über "cabal run" gestartet werden. Z3 läuft dabei nicht im debug modus.
+
+\vspace{2ex}
+
+\begin{Large}
+    Auswertung
+\end{Large}
+\vspace{2ex}
+
+Standartmäßig läuft das Programm mit 10 zufälligen Anfangswerten und 15 erlaubten Wiederholungen bei der Reduzierung des Sudokus.
+Im Durchschnitt lässt sich dadurch ein neues Rätsel mit 24-27 Vorgaben generieren. Dies kann auf Grund des Zufallsaspektes variieren, erlaubt aber dadurch die Generierung sehr vieler neuer Rätsel.
 \bibliographystyle{apalike}
 
 \end{document}
