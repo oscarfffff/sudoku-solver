@@ -1,5 +1,5 @@
 \input{preamble}
-\input{commands}
+\input{format}
 \usepackage{listings}
 
 \begin{document}
@@ -19,8 +19,9 @@ Dieses Projekt implementiert einen Sudoku Solver, sowie einen Generator für neu
     SMT Spezifikationen
 \end{Large}
 \begin{itemize}
-  \item Solver: Z3
-  \item Logik: QF\_LIA - linear integer arithmetic
+  \item \underline{Solver}: Z3
+  \item \underline{Logik}: QF\_LIA - linear integer arithmetic \newline
+        QF\_LIA bietet alles, was für die Modellierung des Sudokus benötigt wird. Zur Darstellung des Problems reichen ganze Zahlen, sowohl für die Werte der Felder (1..9) als auch die Koordianten (0..8), aus. Desweiteren werden haupsächlich Listen auf die Einzigartigkeit ihrer Element untersucht. Auch hierfür reichen die linearen Constraints, welche QF\_LIA zur Verfügung stellt. Somit können wir mit einer verhältnismäßig kleinen Logik arbeiten, was sich auch auf die Performance positiv auswirkt.
 \end{itemize}
 \vspace{2ex}
 
@@ -70,7 +71,7 @@ Das Projekt ist grundsätzlich in 2 Teile unterteilt:
             \end{enumerate}
         \end{enumerate}
 \end{enumerate}
-$^1$ Um zu überprüfen, ob das aktuelle Brett nur eine mögliche Lösung hat, existiert die checkIfUniqueSolution Funktion. Das Ergebnis wird im zweiten Durchlauf dem Solver übergeben mit der Bedingung, dass dies keine Lösung sein darf. Wird dennoch eine Lösung gefunden, war die Lösung des ersten Durchlaufs nicht die einzige. Wird hingegen keine weitere Lösung gefunden weiß man, dass das Sudoku nur eine Lösung hat.
+$^1$ Um zu überprüfen, ob das aktuelle Brett nur eine mögliche Lösung hat, existiert die checkIfUniqueSolution Funktion. Dabei durchläuft das aktuelle (unvollständige Brett) den Solver zwei mal. Im ersten Durchlauf wird das Brett auf seine generelle Lösbarkeit untersucht. Das Ergebnis wird anschließend im zweiten Durchlauf dem Solver übergeben mit der Bedingung, dass dies keine Lösung sein darf. Wird dennoch eine Lösung gefunden, war die Lösung des ersten Durchlaufs nicht die einzige. Wird hingegen keine weitere Lösung gefunden weiß man, dass das Sudoku nur eine Lösung hat.
 
 \vspace{2ex}
 
