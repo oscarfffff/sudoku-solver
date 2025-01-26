@@ -14,6 +14,7 @@ buildRandomCell = do
   randomColumn <- randomRIO (0 :: Int, 8)
   return (randomValue, (randomRow, randomColumn))
 
+-- determines if the board with given fields has a unique solution
 checkIfUniqueSolution :: [Cell] -> IO Bool
 checkIfUniqueSolution preDefValues = do
   res <- solveSudoku preDefValues []
@@ -28,6 +29,7 @@ checkIfUniqueSolution preDefValues = do
     _ -> do
       return False
 
+-- creates a solved board with n initial random values
 createCompleteBoard :: Int -> IO [[Integer]]
 createCompleteBoard numberOfRandomCells = do
   randomCells <- replicateM (fromIntegral numberOfRandomCells) buildRandomCell
@@ -36,6 +38,7 @@ createCompleteBoard numberOfRandomCells = do
     (Sat, Just board) -> return board
     _ -> createCompleteBoard numberOfRandomCells
 
+-- takes a complete solved board and deletes elements until the solution becomes non unique
 reduceBoard :: [Cell] -> Integer -> IO [Cell]
 reduceBoard preDefValues allowedFailures = do
   putStrLn "------------------------------------------------------------------"
@@ -52,14 +55,15 @@ reduceBoard preDefValues allowedFailures = do
         False -> reduceBoard preDefValues (allowedFailures - 1)
         True -> reduceBoard reducedBoard 20
 
+-- takes a falttened solution and convertes it into an array of cells
 convertSolutionToIndexedArray :: [Int] -> [Cell]
-convertSolutionToIndexedArray arr = zipWith (\i x -> (x, (i `mod` 9, i `div` 9))) [0 ..] arr
+convertSolutionToIndexedArray arr = zipWith (\i x -> (x, (i `mod` 9, i `div` 9))) [0 .. length arr - 1] arr
 
 deleteRandomElements :: Int -> [a] -> IO [a]
 deleteRandomElements n xs = do
   indicesToDelete <- replicateM n (randomRIO (0, length xs - 1))
-  let xs' = removeAtIndices indicesToDelete xs
-  return xs'
+  return $ removeAtIndices indicesToDelete xs
 
 removeAtIndices :: [Int] -> [a] -> [a]
-removeAtIndices indicesToDelete xs = foldr (\i acc -> take i acc ++ drop (i + 1) acc) xs (reverse indicesToDelete)
+removeAtIndices indices xs =
+  foldr (\i acc -> take i acc ++ drop (i + 1) acc) xs (reverse indices)

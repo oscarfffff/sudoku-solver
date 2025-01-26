@@ -10,7 +10,8 @@ main :: IO ()
 main = do
   putStrLn "Creating full board..."
   board <- createCompleteBoard 10
-  reducedBoard <- reduceBoard (convertSolutionToIndexedArray $ concatMap (map fromIntegral) board) 20
+  let indexedBoard = convertSolutionToIndexedArray $ concatMap (map fromIntegral) board
+  reducedBoard <- reduceBoard indexedBoard 20
   putStrLn "------------------------------------------------------------------"
   putStrLn "New instance:"
   print reducedBoard
