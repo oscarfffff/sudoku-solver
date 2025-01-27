@@ -46,7 +46,7 @@ reduceBoard preDefValues allowedFailures = do
   print allowedFailures
   putStrLn "Number of prefilled Cells: "
   print $ length preDefValues
-  reducedBoard <- deleteRandomElements 1 preDefValues
+  reducedBoard <- deleteRandomElement preDefValues
   if allowedFailures == 0
     then return preDefValues
     else do
@@ -57,13 +57,9 @@ reduceBoard preDefValues allowedFailures = do
 
 -- takes a falttened solution and convertes it into an array of cells
 convertSolutionToIndexedArray :: [Int] -> [Cell]
-convertSolutionToIndexedArray arr = zipWith (\i x -> (x, (i `mod` 9, i `div` 9))) [0 .. length arr - 1] arr
+convertSolutionToIndexedArray arr = map (\i -> (arr !! i, (i `mod` 9, i `div` 9))) [0 .. length arr - 1]
 
-deleteRandomElements :: Int -> [a] -> IO [a]
-deleteRandomElements n xs = do
-  indicesToDelete <- replicateM n (randomRIO (0, length xs - 1))
-  return $ removeAtIndices indicesToDelete xs
-
-removeAtIndices :: [Int] -> [a] -> [a]
-removeAtIndices indices xs =
-  foldr (\i acc -> take i acc ++ drop (i + 1) acc) xs (reverse indices)
+deleteRandomElement :: [a] -> IO [a]
+deleteRandomElement xs = do
+  i <- randomRIO (0, length xs - 1)
+  return $ take i xs ++ drop (i + 1) xs
