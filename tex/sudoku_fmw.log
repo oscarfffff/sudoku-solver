@@ -1,4 +1,4 @@
-This is pdfTeX, Version 3.141592653-2.6-1.40.26 (TeX Live 2024) (preloaded format=pdflatex 2025.1.11)  1 FEB 2025 15:13
+This is pdfTeX, Version 3.141592653-2.6-1.40.26 (TeX Live 2024) (preloaded format=pdflatex 2025.1.11)  1 FEB 2025 15:54
 entering extended mode
  restricted \write18 enabled.
  %&-line parsing enabled.
@@ -1054,30 +1054,40 @@ LaTeX Font Info:    Trying to load font information for U+esint on input line 2
 (/usr/local/texlive/2024/texmf-dist/tex/latex/esint/uesint.fd
 File: uesint.fd 
 )
-(/usr/local/texlive/2024/texmf-dist/tex/latex/listings/lstlang1.sty
-File: lstlang1.sty 2024/02/21 1.10 listings language file
+Underfull \hbox (badness 10000) in paragraph at lines 48--51
+
+ []
+
+LaTeX Font Info:    Trying to load font information for OMS+cmr on input line 5
+2.
+(/usr/local/texlive/2024/texmf-dist/tex/latex/base/omscmr.fd
+File: omscmr.fd 2023/04/13 v2.5m Standard LaTeX font definitions
 )
-(/usr/local/texlive/2024/texmf-dist/tex/latex/listings/lstlang2.sty
-File: lstlang2.sty 2024/02/21 1.10 listings language file
-)
-LaTeX Font Info:    Trying to load font information for OML+cmr on input line 3
-5.
+LaTeX Font Info:    Font shape `OMS/cmr/m/n' in size <10.95> not available
+(Font)              Font shape `OMS/cmsy/m/n' tried instead on input line 52.
+LaTeX Font Info:    Trying to load font information for OML+cmr on input line 5
+2.
 
 (/usr/local/texlive/2024/texmf-dist/tex/latex/base/omlcmr.fd
 File: omlcmr.fd 2023/04/13 v2.5m Standard LaTeX font definitions
 )
 LaTeX Font Info:    Font shape `OML/cmr/m/n' in size <10.95> not available
-(Font)              Font shape `OML/cmm/m/it' tried instead on input line 35.
+(Font)              Font shape `OML/cmm/m/it' tried instead on input line 52.
  [1
 
 {/usr/local/texlive/2024/texmf-var/fonts/map/pdftex/updmap/pdftex.map}{/usr/loc
 al/texlive/2024/texmf-dist/fonts/enc/dvips/cm-super/cm-super-ts1.enc}]
-Overfull \hbox (9.23709pt too wide) in paragraph at lines 59--61
+Overfull \hbox (10.95476pt too wide) in paragraph at lines 80--81
+[][][][][][][][][][][][][][][][][][][][][][][][][][][] 
+ []
+
+
+Overfull \hbox (9.23709pt too wide) in paragraph at lines 85--87
 \OT1/cmr/m/n/10.95 Auf Ba-sis des Solvers k^^?onnen neue In-stanzen eines Su-do
 kus gener-iert wer-den. Die grunds^^?atzliche
  []
 
-[2] (./sudoku_fmw.aux)
+[2] [3] [4] (./sudoku_fmw.aux)
  ***********
 LaTeX2e <2023-11-01> patch level 1
 L3 programming layer <2024-02-20>
@@ -1086,23 +1096,24 @@ Package rerunfilecheck Info: File `sudoku_fmw.out' has not changed.
 (rerunfilecheck)             Checksum: D41D8CD98F00B204E9800998ECF8427E;0.
  ) 
 Here is how much of TeX's memory you used:
- 32161 strings out of 474116
- 617649 string characters out of 5743682
- 1944187 words of memory out of 5000000
- 54005 multiletter control sequences out of 15000+600000
+ 31686 strings out of 474116
+ 611794 string characters out of 5743682
+ 1956187 words of memory out of 5000000
+ 53507 multiletter control sequences out of 15000+600000
  564652 words of font info for 64 fonts, out of 8000000 for 9000
  1141 hyphenation exceptions out of 8191
- 106i,5n,110p,631b,1807s stack positions out of 10000i,1000n,20000p,200000b,200000s
+ 106i,5n,110p,588b,1528s stack positions out of 10000i,1000n,20000p,200000b,200000s
 </usr/local/texlive/2024/texmf-dist/fonts/type1/public/amsfonts/cm/cmmi10.pfb
 ></usr/local/texlive/2024/texmf-dist/fonts/type1/public/amsfonts/cm/cmr10.pfb><
 /usr/local/texlive/2024/texmf-dist/fonts/type1/public/amsfonts/cm/cmr12.pfb></u
 sr/local/texlive/2024/texmf-dist/fonts/type1/public/amsfonts/cm/cmr8.pfb></usr/
 local/texlive/2024/texmf-dist/fonts/type1/public/amsfonts/cm/cmssbx10.pfb></usr
-/local/texlive/2024/texmf-dist/fonts/type1/public/cm-super/sfrm1095.pfb>
-Output written on sudoku_fmw.pdf (2 pages, 82640 bytes).
+/local/texlive/2024/texmf-dist/fonts/type1/public/amsfonts/cm/cmsy10.pfb></usr/
+local/texlive/2024/texmf-dist/fonts/type1/public/cm-super/sfrm1095.pfb>
+Output written on sudoku_fmw.pdf (4 pages, 99614 bytes).
 PDF statistics:
- 68 PDF objects out of 1000 (max. 8388607)
- 51 compressed objects within 1 object stream
- 17 named destinations out of 1000 (max. 500000)
+ 112 PDF objects out of 1000 (max. 8388607)
+ 91 compressed objects within 1 object stream
+ 43 named destinations out of 1000 (max. 500000)
  13 words of extra memory for PDF output out of 10000 (max. 10000000)
 

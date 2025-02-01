@@ -30,13 +30,15 @@ Dieses Projekt implementiert einen Sudoku Solver, sowie einen Generator für neu
 \end{Large}
 \vspace{2ex}
 
-Im wesentlichen wird das Sudoku Problem als 9x9 Matrix und die einzelnen Werte als Tupel von Wert und Koordiante implementiert.
-\begin{lstlisting}[language=Haskell]
-    board <- replicateM 9 $ replicateM 9 $ var @IntSort
-\end{lstlisting}
-\begin{lstlisting}
-    let setCells = [(n, (row,column)),...]
-\end{lstlisting}
+Folgende elementare Datentypen wurden für die Implementierungen des Solvers sowie die Instanzengenerator verwendet:
+\begin{itemize}
+    \item \underline{Sudoku Instanz}: [[Integer]] \newline
+    Eine Sudokuinstanz ist eine Liste von Zeilen, wobei jede Zeile eine Liste von Zahlen ist. Die Zahlen repräsentieren die Werte der Felder.
+    \item \underline{Eintrag im Sudokubrett}: (Int, (Int, Int)) \newline
+    Ein Feld eines Sudokubretts besteht aus dem Wert des Feldes und den Koordinaten (Zeile, Spalte)
+    \item \underline{vorgegebene Werte}: [Cell] \newline
+    Diese Liste gibt die Felder an, welche bereits vorgegeben sind.
+\end{itemize}
 
 Das Projekt ist grundsätzlich in 2 Teile unterteilt:
 \begin{enumerate}[(1)]
@@ -45,24 +47,50 @@ Das Projekt ist grundsätzlich in 2 Teile unterteilt:
         \begin{enumerate}[(a)]
             \item Row Constraint \newline
             Jede Zeile muss genau die Zahlen 1-9 enthalten (keine Doppelungen)\newline
-            Dies ist bei der gegebenen Datenstruktur leicht umsetzbar, da das Feld bereits als Liste von Zeilen vorliegt. Durch das SMT Keyword "distinct" kann die Eigenschaft leicht überprüft werden.
+            Dies ist bei der gegebenen Datenstruktur leicht umsetzbar, da das Feld bereits als Liste von Zeilen vorliegt. Durch das SMT Keyword "distinct" kann die Eigenschaft leicht überprüft werden. \newline
+            \begin{lstlisting}
+forM_ board $ \row -> assert $ distinct row
+            \end{lstlisting}
             \item Column Constraint \newline
             Jede Spalte muss genau die Zahlen 1-9 enthalten (keine Doppelungen) \newline
             Auch dieses Constraint folgt grundsätzlich dem gleichen Aufbau des Row Constraints. Allerdings muss hierfür die Matrix zunächst transponiert werden. Somit erhalten wir eine Liste von Spalten.
+            \begin{lstlisting}
+forM_ (transpose board) $ \column -> assert $ distinct column
+            \end{lstlisting}
             \item Subgrid Constraint \newline
             Jedes 3x3 Feld muss genau die Zahlen 1-9 enthalten (keine Doppelungen) \newline
             Hierfür müssen die 3x3 Subgrids vorher in eigene Listen gefiltert werden. Dafür werden beginnt bei einer Koordiante "(row, column)" und die nächsten 3 Zeilen jeweils die nächsten 3 Spalten gefiltert
+            \begin{lstlisting}
+let subgrids = getAllSubgrids board
+forM_ subgrids $ \subgrid -> do
+    assert $ distinct subgrid
+            \end{lstlisting}
         \end{enumerate}
 
-    Des weiteren gibt es zwei Constraint, welchen den Zahlenraum einschränken (1-9), ein Constraint, welches die vordefinierten Felder voraussetzt und ein optionales Constraint, welches eine Lösung ausschließt. Dies wird benötigt um später eine Lösung auf ihre Einzigartigkeit zu überprüfen und kommt beim Generieren eines neuen Rätsels zum Einsatz
+    Des weiteren gibt es zwei Constraint, welchen den Zahlenraum einschränken (1-9), ein Constraint, welches die vordefinierten Felder voraussetzt und ein optionales Constraint, welches eine Lösung ausschließt. Dies wird benötigt um später eine Lösung auf ihre Einzigartigkeit zu überprüfen und kommt beim Generieren eines neuen Rätsels zum Einsatz.
+    \begin{lstlisting}
+forM_ predefinedValues $ \(entry, (row, column)) ->
+    assert $ ((board !! row) !! column) === fromIntegral entry
 
+forM_ (concat board) $ assert . (>? 0)
+forM_ (concat board) $ assert . (<? 10)
+
+case maybeExcludedBoard of
+  Just excludedBoard ->
+    assert $ not $ foldl1 (&&) $ zipWith (===) (concat excludedBoard)
+      (concat board)
+  Nothing -> return ()
+    \end{lstlisting}
+    Es gibt einen pattern match auf "maybeExcludedBoard", da das Constraint nur beim Generieren eines neuen Rätsels benötigt wird. Beim Lösen eines Rätsels wird dieses Constraint nicht benötigt.
     \item Generate.hs \newline
     Auf Basis des Solvers können neue Instanzen eines Sudokus generiert werden. Die grundsätzliche Idee ist dabei folgende:
         \begin{enumerate}[(1)]
             \item Generiere \(n\) zufällige Felder und Löse basierend auf diesen ein Sudokubrett. \newline
-            Sollten die zufälligen Felder eine Lösung des Sudokus verhindern, werden neue Zufallsfelder generiert. Hier muss abgewogen werden zwischen der Lösungsgeschwindigkeit des Solvers (mehr vorgegebene Werte beschleunigen das Lösen) und der möglichen Anzahl der Neugenerierungen, da die Felder keine gültige Lösung zulassen. 10 Zufällige Anfangswerte haben sich als gutes Mittelmaß herausgestellt.
+            Sollten die zufälligen Felder eine Lösung des Sudokus verhindern, werden neue Zufallsfelder generiert. Hier muss abgewogen werden zwischen der Lösungsgeschwindigkeit des Solvers (mehr vorgegebene Werte beschleunigen das Lösen) und der möglichen Anzahl der Neugenerierungen, da die Felder keine gültige Lösung zulassen. 10 Zufällige Anfangswerte haben sich als gutes Mittelmaß herausgestellt. \newline
+            \underline{Siehe \(createCompleteBoard\) in Generate.hs}
             \item Entferne ein zufälliges Feld \newline
-            Die Lösbarkeit bleibt dadurch erhalten.
+            Die Lösbarkeit bleibt dadurch erhalten. \newline
+            \underline{Siehe \(deleteRandomElement\) in Generate.hs}
             \item Überprüfe, ob das Sudoku weiterhin nur eine mögliche Lösung hat $^1$.
             \begin{enumerate}
                 \item Falls ja, gehe zu Schritt (2)
@@ -71,7 +99,8 @@ Das Projekt ist grundsätzlich in 2 Teile unterteilt:
             \end{enumerate}
         \end{enumerate}
 \end{enumerate}
-$^1$ Um zu überprüfen, ob das aktuelle Brett nur eine mögliche Lösung hat, existiert die checkIfUniqueSolution Funktion. Dabei durchläuft das aktuelle (unvollständige Brett) den Solver zwei mal. Im ersten Durchlauf wird das Brett auf seine generelle Lösbarkeit untersucht. Das Ergebnis wird anschließend im zweiten Durchlauf dem Solver übergeben mit der Bedingung, dass dies keine Lösung sein darf. Wird dennoch eine Lösung gefunden, war die Lösung des ersten Durchlaufs nicht die einzige. Wird hingegen keine weitere Lösung gefunden weiß man, dass das Sudoku nur eine Lösung hat.
+$^1$ Um zu überprüfen, ob das aktuelle Brett nur eine mögliche Lösung hat, durchläuft das aktuelle (unvollständige) Brett den Solver zwei mal. Im ersten Durchlauf wird das Brett auf seine generelle Lösbarkeit untersucht. Das Ergebnis wird anschließend im zweiten Durchlauf dem Solver übergeben mit der Bedingung, dass dies keine Lösung sein darf. Wird dennoch eine Lösung gefunden, war die Lösung des ersten Durchlaufs nicht die einzige. Wird hingegen keine weitere Lösung gefunden weiß man, dass das Sudoku nur eine Lösung hat. \newline
+\underline{Siehe \(checkIfUniqueSolution\) in Generate.hs}
 
 \vspace{2ex}
 
@@ -80,8 +109,27 @@ $^1$ Um zu überprüfen, ob das aktuelle Brett nur eine mögliche Lösung hat, e
 \end{Large}
 \vspace{2ex}
 
-Zum generieren eines neuen Sudokus kann das Programm über "cabal build" gebaut und anschließend über "cabal run" gestartet werden. Z3 läuft dabei nicht im debug modus.
-
+Das Projekt kann via
+    \begin{lstlisting}
+    cabal build
+    \end{lstlisting}
+gebaut und anschließend über
+    \begin{lstlisting}
+    cabal run
+    \end{lstlisting}
+gestartet werden. \newline
+Unter umständen kann es sein, dass die Bibliothek "hasmtlib" nicht installiert ist. Diese kann über
+    \begin{lstlisting}
+    cabal install hasmtlib
+    \end{lstlisting}
+installiert werden. \newline
+Um das Projekt komplett neu zu bauen kann es hilfreich sein vor \textit{cabal build}
+    \begin{lstlisting}
+    cabal clean
+    \end{lstlisting}
+auszuführen. \newline
+In der aktuellen Fassung des Programs wird keine Eingabe benötigt. Nach dem Start beginnt das Programm mit der Generierung neuer Sudoku Instanzen. Die Ausgabe erfolgt in der Konsole und zeigt die Anzahl der vorgegebenen Felder, sowie die generierte Instanz. \newline
+Während der Ausführung wird der aktuelle Stand der Reduzierung angezeigt (wie viele vorgegebene Felder es gibt und wie viele Neuversuche noch übrig sind) angezeigt.
 \vspace{2ex}
 
 \begin{Large}
