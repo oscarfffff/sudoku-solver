@@ -17,12 +17,12 @@ buildRandomCell = do
 -- determines if the board with given fields has a unique solution
 checkIfUniqueSolution :: [Cell] -> IO Bool
 checkIfUniqueSolution preDefValues = do
-  res <- solveSudoku preDefValues []
+  res <- solveSudoku preDefValues Nothing
   case res of
     (Sat, Just solution) -> do
-      res2 <- solveSudoku preDefValues $ encode solution
+      res2 <- solveSudoku preDefValues $ Just $ encode solution
       case res2 of
-        (Sat, Just solution2) -> do
+        (Sat, _) -> do
           return False
         _ -> do
           return True
@@ -33,7 +33,7 @@ checkIfUniqueSolution preDefValues = do
 createCompleteBoard :: Int -> IO [[Integer]]
 createCompleteBoard numberOfRandomCells = do
   randomCells <- replicateM (fromIntegral numberOfRandomCells) buildRandomCell
-  res <- solveSudoku randomCells []
+  res <- solveSudoku randomCells Nothing
   case res of
     (Sat, Just board) -> return board
     _ -> createCompleteBoard numberOfRandomCells
