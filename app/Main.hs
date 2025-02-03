@@ -3,7 +3,8 @@
 module Main where
 
 import Generate
-import Solver ()
+import Solver
+import Solver (Cell)
 import System.Random ()
 
 main :: IO ()

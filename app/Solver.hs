@@ -21,7 +21,7 @@ solveSudoku predefinedValues excludedBoard = do
     forM_ (concat board) $ assert . (<? 10)
 
     -- Assert set numbers
-    forM_ predefinedValues $ \(entry, (row, column)) ->
+    forM_ predefinedValues $ \(entry, (column, row)) ->
       assert $ ((board !! column) !! row) === fromIntegral entry
 
     -- Row constraint

@@ -12,7 +12,7 @@ buildRandomCell = do
   randomValue <- randomRIO (1 :: Int, 9)
   randomRow <- randomRIO (0 :: Int, 8)
   randomColumn <- randomRIO (0 :: Int, 8)
-  return (randomValue, (randomRow, randomColumn))
+  return (randomValue, (randomColumn, randomRow))
 
 -- determines if the board with given fields has a unique solution
 checkIfUniqueSolution :: [Cell] -> IO Bool
@@ -55,7 +55,7 @@ reduceBoard preDefValues allowedFailures = do
         False -> reduceBoard preDefValues (allowedFailures - 1)
         True -> reduceBoard reducedBoard 20
 
--- takes a falttened solution and convertes it into an array of cells
+-- takes a falttened solutionarray and convertes it into an array of cells
 convertSolutionToIndexedArray :: [Int] -> [Cell]
 convertSolutionToIndexedArray arr = map (\i -> (arr !! i, (i `mod` 9, i `div` 9))) [0 .. length arr - 1]
 
