@@ -9,7 +9,7 @@ import System.Random (randomRIO)
 
 buildRandomCell :: IO Cell
 buildRandomCell = do
-  randomValue <- randomRIO (0 :: Int, 9)
+  randomValue <- randomRIO (1 :: Int, 9)
   randomRow <- randomRIO (0 :: Int, 8)
   randomColumn <- randomRIO (0 :: Int, 8)
   return (randomValue, (randomRow, randomColumn))

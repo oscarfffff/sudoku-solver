@@ -11,7 +11,7 @@
 \end{Large}
 \vspace{2ex}
 
-Dieses Projekt implementiert einen Sudoku Solver, sowie einen Generator für neue Sudoku Instanzen. Zur Modellierung des SMT Problems wurde die Bibliothek "hasmtlib" sowie Haskell als Hostsprache genutzt.
+Dieses Projekt implementiert einen Sudoku Solver, sowie einen Generator für neue Sudoku Instanzen. Zur Modellierung des SMT Problems wurde die Bibliothek "hasmtlib" und Haskell als Hostsprache genutzt.
 
 \vspace{2ex}
 
@@ -21,7 +21,6 @@ Dieses Projekt implementiert einen Sudoku Solver, sowie einen Generator für neu
 \begin{itemize}
   \item \underline{Solver}: Z3
   \item \underline{Logik}: QF\_LIA - linear integer arithmetic \newline
-        QF\_LIA bietet alles, was für die Modellierung des Sudokus benötigt wird. Zur Darstellung des Problems reichen ganze Zahlen, sowohl für die Werte der Felder (1..9) als auch die Koordianten (0..8), aus. Desweiteren werden haupsächlich Listen auf die Einzigartigkeit ihrer Element untersucht. Auch hierfür reichen die linearen Constraints, welche QF\_LIA zur Verfügung stellt. Somit können wir mit einer verhältnismäßig kleinen Logik arbeiten, was sich auch auf die Performance positiv auswirkt.
 \end{itemize}
 \vspace{2ex}
 
@@ -30,20 +29,22 @@ Dieses Projekt implementiert einen Sudoku Solver, sowie einen Generator für neu
 \end{Large}
 \vspace{2ex}
 
-Folgende elementare Datentypen wurden für die Implementierungen des Solvers sowie die Instanzengenerator verwendet:
+Folgende elementare Datentypen wurden für die Implementierungen des Solvers sowie den Instanzengenerator verwendet:
 \begin{itemize}
     \item \underline{Sudoku Instanz}: [[Integer]] \newline
     Eine Sudokuinstanz ist eine Liste von Zeilen, wobei jede Zeile eine Liste von Zahlen ist. Die Zahlen repräsentieren die Werte der Felder.
     \item \underline{Eintrag im Sudokubrett}: (Int, (Int, Int)) \newline
     Ein Feld eines Sudokubretts besteht aus dem Wert des Feldes und den Koordinaten (Zeile, Spalte)
     \item \underline{vorgegebene Werte}: [Cell] \newline
-    Diese Liste gibt die Felder an, welche bereits vorgegeben sind.
+    Diese Liste gibt die Felder für den Solver an, welche bereits vorgegeben sind.
+    \item \underline{unvollstädniges Brett}: [Cell] \newline
+    Diese Liste ist die Ausgabe einer neuen (unvollstädnigen) Sudoku Instanze, welche vom Generator ausgegeben wird.
 \end{itemize}
 
 Das Projekt ist grundsätzlich in 2 Teile unterteilt:
 \begin{enumerate}[(1)]
     \item Solve.hs \newline
-    Dieser Teil implementiert den eigentlichen Lösungsalgorithmus. Dabei wird das Problem in SMT modelliert und anschließend von z3 gelöst. Für die Modellierung bzw. für das Spiel an sich gibt es 3 wesentliche Constraints:
+    Dieser Teil implementiert den eigentlichen Solver für gegebene (unvollstädnige) Sudokuinstanzen. Dabei wird das Problem in SMT modelliert und anschließend von Z3 gelöst. Für die Modellierung bzw. für das Spiel an sich gibt es 3 wesentliche Constraints:
         \begin{enumerate}[(a)]
             \item Row Constraint \newline
             Jede Zeile muss genau die Zahlen 1-9 enthalten (keine Doppelungen)\newline
@@ -59,7 +60,7 @@ forM_ (transpose board) $ \column -> assert $ distinct column
             \end{lstlisting}
             \item Subgrid Constraint \newline
             Jedes 3x3 Feld muss genau die Zahlen 1-9 enthalten (keine Doppelungen) \newline
-            Hierfür müssen die 3x3 Subgrids vorher in eigene Listen gefiltert werden. Dafür werden beginnt bei einer Koordiante "(row, column)" und die nächsten 3 Zeilen jeweils die nächsten 3 Spalten gefiltert
+            Hierfür müssen die 3x3 Subgrids vorher in eigene Listen gefiltert werden. Dafür werden beginnend bei einer Koordiante (row, column) und die nächsten 3 Zeilen in den nächsten 3 Spalten genommen. \underline{Siehe \(getSubgridAtPosition\) und \(getAllSubgrids\) in Generate.hs}
             \begin{lstlisting}
 let subgrids = getAllSubgrids board
 forM_ subgrids $ \subgrid -> do
@@ -75,13 +76,13 @@ forM_ predefinedValues $ \(entry, (row, column)) ->
 forM_ (concat board) $ assert . (>? 0)
 forM_ (concat board) $ assert . (<? 10)
 
-case maybeExcludedBoard of
-  Just excludedBoard ->
-    assert $ not $ foldl1 (&&) $ zipWith (===) (concat excludedBoard)
-      (concat board)
+case excludedBoard of
+  Just boardToExclude -> assert $ not $ foldl1 (&&) $ zipWith (===)
+    (concat boardToExclude) (concat board)
   Nothing -> return ()
+return board
     \end{lstlisting}
-    Es gibt einen pattern match auf "maybeExcludedBoard", da das Constraint nur beim Generieren eines neuen Rätsels benötigt wird. Beim Lösen eines Rätsels wird dieses Constraint nicht benötigt.
+    Es gibt einen pattern match auf "excludedBoard", da das Constraint nur beim Generieren eines neuen Rätsels benötigt wird. Beim Lösen eines Rätsels wird dieses Constraint nicht benötigt.
     \item Generate.hs \newline
     Auf Basis des Solvers können neue Instanzen eines Sudokus generiert werden. Die grundsätzliche Idee ist dabei folgende:
         \begin{enumerate}[(1)]
@@ -111,25 +112,16 @@ $^1$ Um zu überprüfen, ob das aktuelle Brett nur eine mögliche Lösung hat, d
 
 Das Projekt kann via
     \begin{lstlisting}
-    cabal build
+    cabal clean && cabal build
     \end{lstlisting}
 gebaut und anschließend über
     \begin{lstlisting}
     cabal run
     \end{lstlisting}
 gestartet werden. \newline
-Unter umständen kann es sein, dass die Bibliothek "hasmtlib" nicht installiert ist. Diese kann über
-    \begin{lstlisting}
-    cabal install hasmtlib
-    \end{lstlisting}
-installiert werden. \newline
-Um das Projekt komplett neu zu bauen kann es hilfreich sein vor \textit{cabal build}
-    \begin{lstlisting}
-    cabal clean
-    \end{lstlisting}
-auszuführen. \newline
-In der aktuellen Fassung des Programs wird keine Eingabe benötigt. Nach dem Start beginnt das Programm mit der Generierung neuer Sudoku Instanzen. Die Ausgabe erfolgt in der Konsole und zeigt die Anzahl der vorgegebenen Felder, sowie die generierte Instanz. \newline
-Während der Ausführung wird der aktuelle Stand der Reduzierung angezeigt (wie viele vorgegebene Felder es gibt und wie viele Neuversuche noch übrig sind) angezeigt.
+Alle Abhängigkeiten sind in der sudoku.cabal Datei aufeglistet.
+In der aktuellen Fassung des Programs wird keine Eingabe benötigt. Nach dem Start beginnt das Programm mit der Generierung neuer Sudoku Instanzen. Die Ausgabe zeigt das unvollstädnige Rätsel sowie das gelöste Sudoku \newline
+Während der Ausführung wird der aktuelle Stand der Reduzierung angezeigt (wie viele vorgegebene Felder es gibt und wie viele Neuversuche im aktuellen Durchlauf noch übrig sind) angezeigt.
 \vspace{2ex}
 
 \begin{Large}

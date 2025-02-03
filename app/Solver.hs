@@ -11,7 +11,7 @@ import Prelude hiding (all, and, any, not, or, (&&), (||))
 type Cell = (Int, (Int, Int))
 
 solveSudoku :: [Cell] -> Maybe [[Expr 'IntSort]] -> IO (Result, Maybe (Decoded [[Expr 'IntSort]]))
-solveSudoku predefinedValues maybeExcludedBoard = do
+solveSudoku predefinedValues excludedBoard = do
   solveWith @SMT (solver $ z3) $ do
     setLogic "QF_LIA"
     board <- replicateM 9 $ replicateM 9 $ var @IntSort
@@ -22,7 +22,7 @@ solveSudoku predefinedValues maybeExcludedBoard = do
 
     -- Assert set numbers
     forM_ predefinedValues $ \(entry, (row, column)) ->
-      assert $ ((board !! row) !! column) === fromIntegral entry
+      assert $ ((board !! column) !! row) === fromIntegral entry
 
     -- Row constraint
     forM_ board $ \row -> assert $ distinct row
@@ -36,8 +36,8 @@ solveSudoku predefinedValues maybeExcludedBoard = do
       assert $ distinct subgrid
 
     -- Exclude board from solution if provided
-    case maybeExcludedBoard of
-      Just excludedBoard -> assert $ not $ foldl1 (&&) $ zipWith (===) (concat excludedBoard) (concat board)
+    case excludedBoard of
+      Just boardToExclude -> assert $ not $ foldl1 (&&) $ zipWith (===) (concat boardToExclude) (concat board)
       Nothing -> return ()
     return board
 
